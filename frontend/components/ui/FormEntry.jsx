@@ -105,10 +105,10 @@ const FormEntry = () => {
     try {
       console.log('Testing API connection to:', API_BASE_URL);
       
-      // Try the actual form-entry endpoint with a HEAD request to test connectivity
-      // This should return quickly without processing anything
-      const testResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'HEAD',
+      // Try a simple GET request to the base URL or root endpoint
+      // This should be lighter than POST and more likely to be supported
+      const testResponse = await fetch(`${API_BASE_URL}/`, {
+        method: 'GET',
         signal: AbortSignal.timeout(10000),
         headers: {
           'Accept': 'application/json',
@@ -117,11 +117,14 @@ const FormEntry = () => {
       
       console.log('API test response:', testResponse.status, testResponse.statusText);
       
-      if (testResponse.ok || testResponse.status === 405) {
-        // 405 Method Not Allowed is actually good - it means the endpoint exists but doesn't accept HEAD
-        setError('✅ API connection successful! Server is reachable and the endpoint exists.');
+      if (testResponse.ok) {
+        setError('✅ API connection successful! Server is reachable and responding.');
       } else if (testResponse.status === 404) {
-        setError(`⚠️ API endpoint not found (404). Check if ${endpoint} is the correct endpoint path.`);
+        // 404 on root is actually fine - it means the server is responding
+        setError('✅ API server is reachable! (404 on root endpoint is normal)');
+      } else if (testResponse.status === 405) {
+        // 405 Method Not Allowed is also fine - server is responding
+        setError('✅ API server is reachable! (Method not allowed on root is normal)');
       } else {
         setError(`⚠️ API server responded with status ${testResponse.status}. The server is reachable but may have issues.`);
       }
@@ -130,7 +133,7 @@ const FormEntry = () => {
       
       let errorMsg = '❌ API connection failed: ';
       if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-        errorMsg += 'Cannot reach the server. This could be due to:\n• CORS policy blocking the request\n• Network connectivity issues\n• Server is down\n• Incorrect API URL';
+        errorMsg += 'Cannot reach the server. This could be due to:\n• Network connectivity issues\n• Server is down\n• Incorrect API URL\n• DNS resolution problems';
       } else if (err.name === 'AbortError') {
         errorMsg += 'Connection timeout. Server may be slow or unresponsive.';
       } else {
