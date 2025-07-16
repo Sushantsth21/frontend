@@ -70,12 +70,20 @@ const FormEntry = () => {
   useEffect(() => {
     const loadFormData = async () => {
       try {
+        console.log('Attempting to load cam-3_result.json...');
         const response = await fetch('/cam-3_result.json');
+        console.log('cam-3_result.json fetch response:', response.status, response.statusText);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to load cam-3_result.json: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        console.log('cam-3_result.json loaded successfully. Keys:', Object.keys(data));
         setFormData(data);
       } catch (err) {
         console.error('Failed to load form data:', err);
-        setError('Failed to load pre-extracted form data.');
+        setError(`Failed to load pre-extracted form data: ${err.message}`);
       }
     };
     
@@ -242,26 +250,56 @@ const FormEntry = () => {
     setProcessing(true);
     setError('');
     
+    // First, let's try to verify if the forms directory is accessible
+    console.log('Current window location:', window.location.origin);
+    console.log('Attempting to process PDF:', selectedPdf);
+    
     try {
       // Get the PDF file from the forms directory
       const pdfPath = `/forms/${selectedPdf}`;
       
+      console.log(`Attempting to fetch PDF from: ${pdfPath}`);
+      
       // Fetch the PDF file
       const pdfResponse = await fetch(pdfPath);
+      console.log(`PDF fetch response status: ${pdfResponse.status} ${pdfResponse.statusText}`);
+      
       if (!pdfResponse.ok) {
-        throw new Error(`Failed to load PDF: ${selectedPdf}`);
+        if (pdfResponse.status === 404) {
+          throw new Error(`PDF file not found: ${selectedPdf}. The file may not exist in the forms directory on the server.`);
+        } else {
+          throw new Error(`Failed to load PDF: ${selectedPdf} (Status: ${pdfResponse.status} ${pdfResponse.statusText})`);
+        }
       }
       
       const pdfBlob = await pdfResponse.blob();
+      console.log(`PDF loaded successfully. Size: ${pdfBlob.size} bytes, Type: ${pdfBlob.type}`);
+      
+      if (pdfBlob.size === 0) {
+        throw new Error(`PDF file is empty: ${selectedPdf}`);
+      }
+      
+      if (!pdfBlob.type || !pdfBlob.type.includes('pdf')) {
+        console.warn(`Warning: PDF file may not be a valid PDF. Type: ${pdfBlob.type}`);
+      }
       
       // Create FormData with the PDF and extracted data
       const formDataToSend = new FormData();
       formDataToSend.append('file', pdfBlob, selectedPdf);
-      formDataToSend.append('extracted_data', JSON.stringify(formData.medical_information));
+      
+      // Verify medical_information exists
+      if (!formData.medical_information) {
+        console.error('Medical information not found in form data. Available keys:', Object.keys(formData));
+        throw new Error('Medical information not found in the loaded form data.');
+      }
+      
+      const extractedDataJson = JSON.stringify(formData.medical_information);
+      formDataToSend.append('extracted_data', extractedDataJson);
       
       console.log(`Processing form: ${selectedPdf} with API: ${API_BASE_URL}${endpoint}`);
       console.log('PDF blob size:', pdfBlob.size);
-      console.log('Extracted data size:', JSON.stringify(formData.medical_information).length);
+      console.log('Extracted data size:', extractedDataJson.length);
+      console.log('Medical info keys:', Object.keys(formData.medical_information));
       console.log('Form data keys:', Array.from(formDataToSend.keys()));
       
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -311,13 +349,20 @@ const FormEntry = () => {
       
       // Handle specific error types
       if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-        errorMessage = `Cannot connect to server. Please check if the API is running at ${API_BASE_URL}`;
+        if (err.message.includes('/forms/')) {
+          errorMessage = `Cannot load PDF file: ${selectedPdf}. The file may not exist in the public/forms directory or there may be a network issue.`;
+        } else {
+          errorMessage = `Cannot connect to server. Please check if the API is running at ${API_BASE_URL}`;
+        }
       } else if (err.name === 'AbortError') {
         errorMessage = `Request timeout: The server took too long to respond. Please try again.`;
       } else if (err.message.includes('NetworkError') || err.message.includes('fetch')) {
         errorMessage = `Network error: Unable to reach the server at ${API_BASE_URL}`;
+      } else if (err.message.includes('PDF file not found')) {
+        errorMessage = `${err.message} Please check if the file exists in the public/forms directory.`;
+      } else if (err.message.includes('Failed to load PDF')) {
+        errorMessage = `${err.message} This could be due to file permissions or server configuration issues.`;
       }
-      // Remove the generic "Load failed" handling to show actual server errors
       
       setError(`Failed to process ${selectedPdf}: ${errorMessage}`);
     }
