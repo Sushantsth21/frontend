@@ -162,12 +162,24 @@ const FormEntry = () => {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
           method: 'POST',
           body: formData,
+          signal: AbortSignal.timeout(120000), // 2 minute timeout
         });
 
         if (!response.ok) {
           const errorText = await response.text();
           console.error('Server response:', errorText);
-          throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+          console.error('Response status:', response.status, response.statusText);
+          
+          // Try to parse error text as JSON for more details
+          let serverError = errorText;
+          try {
+            const errorJson = JSON.parse(errorText);
+            serverError = errorJson.message || errorJson.detail || errorText;
+          } catch (e) {
+            // If not JSON, use the raw text
+          }
+          
+          throw new Error(`Server Error (${response.status}): ${serverError}`);
         }
 
         const result = await response.json();
@@ -187,15 +199,23 @@ const FormEntry = () => {
 
       } catch (err) {
         console.error('Upload error:', err);
+        console.error('Error details:', {
+          name: err.name,
+          message: err.message,
+          stack: err.stack
+        });
         
         let errorMessage = err.message;
         
         // Handle specific error types
         if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
           errorMessage = `Cannot connect to server. Please check if the API is running at ${API_BASE_URL}`;
-        } else if (err.message.includes('Load failed')) {
-          errorMessage = `Server error: Unable to process the file. Please try again or contact support.`;
+        } else if (err.name === 'AbortError') {
+          errorMessage = `Request timeout: The server took too long to respond. Please try again.`;
+        } else if (err.message.includes('NetworkError') || err.message.includes('fetch')) {
+          errorMessage = `Network error: Unable to reach the server at ${API_BASE_URL}`;
         }
+        // Remove the generic "Load failed" handling to show actual server errors
         
         setFiles(prev => prev.map(f => 
           f.id === fileObj.id ? { ...f, status: 'error', error: errorMessage } : f
@@ -240,16 +260,32 @@ const FormEntry = () => {
       formDataToSend.append('extracted_data', JSON.stringify(formData.medical_information));
       
       console.log(`Processing form: ${selectedPdf} with API: ${API_BASE_URL}${endpoint}`);
+      console.log('PDF blob size:', pdfBlob.size);
+      console.log('Extracted data size:', JSON.stringify(formData.medical_information).length);
+      console.log('Form data keys:', Array.from(formDataToSend.keys()));
       
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         body: formDataToSend,
+        // Add timeout and headers for better debugging
+        signal: AbortSignal.timeout(120000), // 2 minute timeout
       });
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Server response:', errorText);
-        throw new Error(`Processing failed: ${response.status} ${response.statusText}`);
+        console.error('Response status:', response.status, response.statusText);
+        
+        // Try to parse error text as JSON for more details
+        let serverError = errorText;
+        try {
+          const errorJson = JSON.parse(errorText);
+          serverError = errorJson.message || errorJson.detail || errorText;
+        } catch (e) {
+          // If not JSON, use the raw text
+        }
+        
+        throw new Error(`Server Error (${response.status}): ${serverError}`);
       }
 
       const result = await response.json();
@@ -265,15 +301,23 @@ const FormEntry = () => {
 
     } catch (err) {
       console.error('Processing error:', err);
+      console.error('Error details:', {
+        name: err.name,
+        message: err.message,
+        stack: err.stack
+      });
       
       let errorMessage = err.message;
       
       // Handle specific error types
       if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
         errorMessage = `Cannot connect to server. Please check if the API is running at ${API_BASE_URL}`;
-      } else if (err.message.includes('Load failed')) {
-        errorMessage = `Server error: Unable to process the form. Please try again or contact support.`;
+      } else if (err.name === 'AbortError') {
+        errorMessage = `Request timeout: The server took too long to respond. Please try again.`;
+      } else if (err.message.includes('NetworkError') || err.message.includes('fetch')) {
+        errorMessage = `Network error: Unable to reach the server at ${API_BASE_URL}`;
       }
+      // Remove the generic "Load failed" handling to show actual server errors
       
       setError(`Failed to process ${selectedPdf}: ${errorMessage}`);
     }
