@@ -12,6 +12,7 @@ const FormEntry = () => {
   const [selectedPdf, setSelectedPdf] = useState('');
   const [formData, setFormData] = useState(null);
   const [processing, setProcessing] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
 
   // Configuration
   const title = "Form Entry";
@@ -89,6 +90,52 @@ const FormEntry = () => {
     
     loadFormData();
   }, []);
+
+  const testApiConnection = async () => {
+    if (!API_BASE_URL) {
+      setError('API URL is not configured. Please check your environment variables.');
+      return;
+    }
+
+    setTestingConnection(true);
+    setError('');
+
+    try {
+      console.log('Testing API connection to:', API_BASE_URL);
+      
+      // Try a simple GET request first
+      const testResponse = await fetch(`${API_BASE_URL}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(10000),
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      console.log('API test response:', testResponse.status, testResponse.statusText);
+      
+      if (testResponse.ok) {
+        setError('✅ API connection successful! Server is reachable.');
+      } else {
+        setError(`⚠️ API server responded with status ${testResponse.status}. The server is reachable but may have issues.`);
+      }
+    } catch (err) {
+      console.error('API connection test failed:', err);
+      
+      let errorMsg = '❌ API connection failed: ';
+      if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+        errorMsg += 'Cannot reach the server. Check if the API is running and accessible.';
+      } else if (err.name === 'AbortError') {
+        errorMsg += 'Connection timeout. Server may be slow or unresponsive.';
+      } else {
+        errorMsg += err.message;
+      }
+      
+      setError(errorMsg);
+    }
+    
+    setTestingConnection(false);
+  };
 
   const handleDrag = useCallback((e) => {
     e.preventDefault();
@@ -253,6 +300,19 @@ const FormEntry = () => {
     // First, let's try to verify if the forms directory is accessible
     console.log('Current window location:', window.location.origin);
     console.log('Attempting to process PDF:', selectedPdf);
+    console.log('API URL:', API_BASE_URL);
+    
+    // Test API connectivity first
+    try {
+      console.log('Testing API connectivity...');
+      const healthCheck = await fetch(`${API_BASE_URL}/health`, {
+        method: 'GET',
+        signal: AbortSignal.timeout(10000), // 10 second timeout for health check
+      });
+      console.log('Health check response:', healthCheck.status, healthCheck.statusText);
+    } catch (healthError) {
+      console.warn('Health check failed (this may be normal if no health endpoint exists):', healthError.message);
+    }
     
     try {
       // Get the PDF file from the forms directory
@@ -302,11 +362,22 @@ const FormEntry = () => {
       console.log('Medical info keys:', Object.keys(formData.medical_information));
       console.log('Form data keys:', Array.from(formDataToSend.keys()));
       
+      // Log the actual request being made
+      console.log('Making API request with:');
+      console.log('- URL:', `${API_BASE_URL}${endpoint}`);
+      console.log('- Method: POST');
+      console.log('- Body: FormData with file and extracted_data');
+      
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         body: formDataToSend,
         // Add timeout and headers for better debugging
         signal: AbortSignal.timeout(120000), // 2 minute timeout
+        // Add explicit headers to help with CORS and debugging
+        headers: {
+          // Don't set Content-Type for FormData - let browser set it with boundary
+          'Accept': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -342,26 +413,31 @@ const FormEntry = () => {
       console.error('Error details:', {
         name: err.name,
         message: err.message,
-        stack: err.stack
+        stack: err.stack,
+        cause: err.cause
       });
       
       let errorMessage = err.message;
       
-      // Handle specific error types
+      // Handle specific error types with more detailed information
       if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
         if (err.message.includes('/forms/')) {
           errorMessage = `Cannot load PDF file: ${selectedPdf}. The file may not exist in the public/forms directory or there may be a network issue.`;
         } else {
-          errorMessage = `Cannot connect to server. Please check if the API is running at ${API_BASE_URL}`;
+          // This is likely the API connection issue
+          errorMessage = `Cannot connect to API server at ${API_BASE_URL}. This could be due to:\n• Server is down or not responding\n• Network connectivity issues\n• CORS policy blocking the request\n• Firewall blocking the connection\n\nPlease check if the API server is running and accessible.`;
         }
       } else if (err.name === 'AbortError') {
-        errorMessage = `Request timeout: The server took too long to respond. Please try again.`;
-      } else if (err.message.includes('NetworkError') || err.message.includes('fetch')) {
-        errorMessage = `Network error: Unable to reach the server at ${API_BASE_URL}`;
+        errorMessage = `Request timeout: The server at ${API_BASE_URL} took too long to respond (>2 minutes). This could indicate:\n• Server is overloaded\n• Large file processing taking too long\n• Network connectivity issues\n\nPlease try again or contact support.`;
+      } else if (err.message.includes('NetworkError') || err.message.includes('net::')) {
+        errorMessage = `Network error connecting to ${API_BASE_URL}. This could be:\n• Internet connectivity issues\n• DNS resolution problems\n• Server firewall blocking requests\n• CORS policy restrictions`;
       } else if (err.message.includes('PDF file not found')) {
         errorMessage = `${err.message} Please check if the file exists in the public/forms directory.`;
       } else if (err.message.includes('Failed to load PDF')) {
         errorMessage = `${err.message} This could be due to file permissions or server configuration issues.`;
+      } else if (err.message.includes('Server Error')) {
+        // This is already a formatted server error, keep it as is
+        errorMessage = err.message;
       }
       
       setError(`Failed to process ${selectedPdf}: ${errorMessage}`);
@@ -516,23 +592,42 @@ const FormEntry = () => {
             <p className="text-sm text-slate-600">
               {selectedPdf ? `Selected: ${selectedPdf}` : 'Select a PDF form to auto-fill with pre-extracted data'}
             </p>
-            <button
-              onClick={processForm}
-              disabled={processing || !selectedPdf || !formData}
-              className={`${bgGradient} hover:shadow-md disabled:opacity-50 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-200 inline-flex items-center gap-2`}
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <FileText className="h-4 w-4" />
-                  Process Form
-                </>
-              )}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={testApiConnection}
+                disabled={testingConnection}
+                className="bg-blue-500 hover:bg-blue-600 hover:shadow-md disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 inline-flex items-center gap-2"
+              >
+                {testingConnection ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Testing...
+                  </>
+                ) : (
+                  <>
+                    <Activity className="h-4 w-4" />
+                    Test API
+                  </>
+                )}
+              </button>
+              <button
+                onClick={processForm}
+                disabled={processing || !selectedPdf || !formData}
+                className={`${bgGradient} hover:shadow-md disabled:opacity-50 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-200 inline-flex items-center gap-2`}
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="h-4 w-4" />
+                    Process Form
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
