@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Activity } from 'lucide-react';
-import PatientDataEntry from './PatientDataEntry';
 import FormEntry from './FormEntry';
 
 const DualEntryApp = () => {
@@ -29,12 +28,8 @@ const DualEntryApp = () => {
           </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 max-w-8xl mx-auto">
-          {/* Patient Data Entry Column */}
-          <PatientDataEntry />
-
-          {/* Form Entry Column */}
+        {/* Single Column Layout */}
+        <div className="max-w-4xl mx-auto">
           <FormEntry />
         </div>
 
