@@ -1,0 +1,83 @@
+{
+  "success": true,
+  "processing_time": 11.22,
+  "ocr_confidence": 99.88,
+  "raw_text": "Identification\nSurname: Mitchell\nGiven Names: Evelyn Rose\nDOB: 1943-09-22\nGender: Female\nUMRN: 0089735\nAddress: 42 Claremont Ave\nSuburb: Nedlands\nPostcode: 6009\nSection 1: Death Location\nDeath occurred in: Ward\nSection 3: Reporting to Coroner\nPCIU/police officer notified by phone: No (since not reportable)\nName of Doctor reporting: Dr. Jane Smith\nConsultant notified: Yes\nContact Number: (08) 9221 3345\nSection 6: Hospital Requirements\nDonor Coordinator Notified: No\nDischarge summary completed: Yes\nPermission for postmortem: No\nBereavement support: Yes\nNursing home notified: No\nGeneral Practitioner notified: Yes\nNext of kin notified: Yes\n\n--- PAGE BREAK ---\n\nDeath Details\nDate of Death: 2024-06-14\nTime of Death: 10:30 hours\nDoctor Certifying Life Extinct: Dr. Jane Smith\nPosition: Attending Physician\nDeath Reportability to Coroner (Based on provided patient data, all assumed 'No' unless new information indicates otherwise):\nIs the cause of death unknown or uncertified by a medical practitioner? No\nHas the death or does the death appear to be have occurred in suspicious circumstances? No\nWas the death or does the death appear to have been unexpected or unnatural? No\nHas the death or does the death appear to have occurred, in or following violent circumstances? No\nHas the death or does the death appear to have resulted, directly or indirectly from injury? No\nHas the death occurred during anaesthesia? No\nDid the death possibly occur as a result of, or does it appear to have resulted from, anaesthesia? No\nImmediately prior to the death was the deceased a person under the control, care or custody of the WA Police Force, Prison\nService or Department for Child Protection and Family Support? No\nAdmitted to a centre under the Alcohol and Drug Authority Act 1974? No\nAn involuntary patient, apprehended or detained under the Mental Health Act 1996? No\nIs the deceased person's identity unknown? No\nTo your knowledge has any one expressed any concerns regarding the cause of the deceased person's death or medical\ntreatment? No\nIf you have answered YES to any of the above questions, the death is REPORTABLE to the Coroner. No\nOther Reporting Obligations (Based on provided patient data, all assumed 'No' unless new information indicates otherwise):\n5.1 REPORTABLE DEATHS UNDER THE HEALTH ACT 1911:\nIs the death: a maternal death (arising from pregnancy or childbirth or associated with complications)? No\none involving a child who is stillborn (> than 20 weeks gestation), or under the age of 1 year? No\none that occurred within 48 hours of administration of anaesthetic or as a result of complications arising from the same? No\n5.2 DEATHS REPORTABLE TO THE CHIEF PSYCHIATRIST: Is this a reportable death to the Chief Psychiatrist? No\n5.3 SEVERITY ASSESSMENT CODE (SAC) 1 CLINICAL INCIDENTS: The death may reflect the occurrence of a SAC 1\nclinical incident. No\n\n--- PAGE BREAK ---\n\nFollow-up:\nFollow-up appointment with primary care physician within one week post-discharge.\nNeurology follow-up within one month or as recommended.\nHome healthcare to start immediately upon discharge.\nSign-off:\nDr. Jane Smith\nAttending Physician\nSuggested Facilities\n© 2024 RE-Assist. All rights reserved.",
+  "medical_information": {
+    "Identification": {
+      "Surname": "Mitchell",
+      "Given Names": "Evelyn Rose",
+      "DOB": "1943-09-22",
+      "Gender": "Female",
+      "UMRN": "0089735",
+      "Address": "42 Claremont Ave",
+      "Suburb": "Nedlands",
+      "Postcode": "6009"
+    },
+    "Death Location": {
+      "Death occurred in": "Ward"
+    },
+    "Reporting to Coroner": {
+      "PCIU/police officer notified by phone": "No (since not reportable)",
+      "Name of Doctor reporting": "Dr. Jane Smith",
+      "Consultant notified": "Yes",
+      "Contact Number": "(08) 9221 3345"
+    },
+    "Hospital Requirements": {
+      "Donor Coordinator Notified": "No",
+      "Discharge summary completed": "Yes",
+      "Permission for postmortem": "No",
+      "Bereavement support": "Yes",
+      "Nursing home notified": "No",
+      "General Practitioner notified": "Yes",
+      "Next of kin notified": "Yes"
+    },
+    "Death Details": {
+      "Date of Death": "2024-06-14",
+      "Time of Death": "10:30 hours",
+      "Doctor Certifying Life Extinct": "Dr. Jane Smith",
+      "Position": "Attending Physician",
+      "Death Reportability to Coroner": {
+        "Is the cause of death unknown or uncertified by a medical practitioner?": "No",
+        "Has the death or does the death appear to be have occurred in suspicious circumstances?": "No",
+        "Was the death or does the death appear to have been unexpected or unnatural?": "No",
+        "Has the death or does the death appear to have occurred, in or following violent circumstances?": "No",
+        "Has the death or does the death appear to have resulted, directly or indirectly from injury?": "No",
+        "Has the death occurred during anaesthesia?": "No",
+        "Did the death possibly occur as a result of, or does it appear to have resulted from, anaesthesia?": "No",
+        "Immediately prior to the death was the deceased a person under the control, care or custody of the WA Police Force, Prison Service or Department for Child Protection and Family Support?": "No",
+        "Admitted to a centre under the Alcohol and Drug Authority Act 1974?": "No",
+        "An involuntary patient, apprehended or detained under the Mental Health Act 1996?": "No",
+        "Is the deceased person's identity unknown?": "No",
+        "To your knowledge has any one expressed any concerns regarding the cause of the deceased person's death or medical treatment?": "No",
+        "If you have answered YES to any of the above questions, the death is REPORTABLE to the Coroner.": "No"
+      },
+      "Other Reporting Obligations": {
+        "REPORTABLE DEATHS UNDER THE HEALTH ACT 1911": {
+          "Is the death: a maternal death (arising from pregnancy or childbirth or associated with complications)?": "No",
+          "one involving a child who is stillborn (> than 20 weeks gestation), or under the age of 1 year?": "No",
+          "one that occurred within 48 hours of administration of anaesthetic or as a result of complications arising from the same?": "No"
+        },
+        "DEATHS REPORTABLE TO THE CHIEF PSYCHIATRIST": {
+          "Is this a reportable death to the Chief Psychiatrist?": "No"
+        },
+        "SEVERITY ASSESSMENT CODE (SAC) 1 CLINICAL INCIDENTS": {
+          "The death may reflect the occurrence of a SAC 1 clinical incident.": "No"
+        }
+      }
+    },
+    "Follow-up": [
+      "Follow-up appointment with primary care physician within one week post-discharge.",
+      "Neurology follow-up within one month or as recommended.",
+      "Home healthcare to start immediately upon discharge."
+    ],
+    "Sign-off": {
+      "Doctor": "Dr. Jane Smith",
+      "Position": "Attending Physician"
+    },
+    "Metadata": {
+      "Copyright": "© 2024 RE-Assist. All rights reserved."
+    }
+  },
+  "timestamp": "2025-07-16 20:59:42"
+}
