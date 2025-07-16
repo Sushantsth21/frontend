@@ -62,9 +62,11 @@ const FormEntry = () => {
   // Use environment variable - this should be set in .env.local
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  // Check if API URL is configured
+  // Check if API URL is configured and log for debugging
   if (!API_BASE_URL) {
     console.error('NEXT_PUBLIC_API_URL environment variable is not set. Please check your .env file.');
+  } else {
+    console.log('API_BASE_URL loaded from environment:', API_BASE_URL);
   }
 
   // Load the cam-3_result.json data on component mount
@@ -103,9 +105,10 @@ const FormEntry = () => {
     try {
       console.log('Testing API connection to:', API_BASE_URL);
       
-      // Try a simple GET request first
-      const testResponse = await fetch(`${API_BASE_URL}/health`, {
-        method: 'GET',
+      // Try the actual form-entry endpoint with a HEAD request to test connectivity
+      // This should return quickly without processing anything
+      const testResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'HEAD',
         signal: AbortSignal.timeout(10000),
         headers: {
           'Accept': 'application/json',
@@ -114,8 +117,11 @@ const FormEntry = () => {
       
       console.log('API test response:', testResponse.status, testResponse.statusText);
       
-      if (testResponse.ok) {
-        setError('✅ API connection successful! Server is reachable.');
+      if (testResponse.ok || testResponse.status === 405) {
+        // 405 Method Not Allowed is actually good - it means the endpoint exists but doesn't accept HEAD
+        setError('✅ API connection successful! Server is reachable and the endpoint exists.');
+      } else if (testResponse.status === 404) {
+        setError(`⚠️ API endpoint not found (404). Check if ${endpoint} is the correct endpoint path.`);
       } else {
         setError(`⚠️ API server responded with status ${testResponse.status}. The server is reachable but may have issues.`);
       }
@@ -124,7 +130,7 @@ const FormEntry = () => {
       
       let errorMsg = '❌ API connection failed: ';
       if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-        errorMsg += 'Cannot reach the server. Check if the API is running and accessible.';
+        errorMsg += 'Cannot reach the server. This could be due to:\n• CORS policy blocking the request\n• Network connectivity issues\n• Server is down\n• Incorrect API URL';
       } else if (err.name === 'AbortError') {
         errorMsg += 'Connection timeout. Server may be slow or unresponsive.';
       } else {
@@ -301,18 +307,6 @@ const FormEntry = () => {
     console.log('Current window location:', window.location.origin);
     console.log('Attempting to process PDF:', selectedPdf);
     console.log('API URL:', API_BASE_URL);
-    
-    // Test API connectivity first
-    try {
-      console.log('Testing API connectivity...');
-      const healthCheck = await fetch(`${API_BASE_URL}/health`, {
-        method: 'GET',
-        signal: AbortSignal.timeout(10000), // 10 second timeout for health check
-      });
-      console.log('Health check response:', healthCheck.status, healthCheck.statusText);
-    } catch (healthError) {
-      console.warn('Health check failed (this may be normal if no health endpoint exists):', healthError.message);
-    }
     
     try {
       // Get the PDF file from the forms directory
@@ -561,12 +555,19 @@ const FormEntry = () => {
               <FolderOpen className="h-5 w-5 text-slate-600" />
               Pre-filled Forms (with cam-3_result.json)
             </h3>
-            {formData && (
-              <div className="flex items-center gap-2 text-sm text-emerald-600">
-                <CheckCircle className="h-4 w-4" />
-                Form data loaded
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              {API_BASE_URL && (
+                <div className="text-xs text-slate-500">
+                  API: {API_BASE_URL}
+                </div>
+              )}
+              {formData && (
+                <div className="flex items-center gap-2 text-sm text-emerald-600">
+                  <CheckCircle className="h-4 w-4" />
+                  Form data loaded
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto mb-4">
