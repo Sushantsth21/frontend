@@ -21,7 +21,7 @@ const DualEntryApp = () => {
                   RE-Assist
                 </h1>
                 <p className="text-slate-600 text-xl font-medium mt-1">
-                  Intelligent Document Processing Platform
+                  Intelligent Document Processing Platform.
                 </p>
               </div>
             </div>
